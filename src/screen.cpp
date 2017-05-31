@@ -356,6 +356,33 @@ void Screen::setSize(const Vector2i &size) {
 #endif
 }
 
+Vector2i Screen::windowPosition() const {
+    int wx, wy;
+    glfwGetWindowPos(mGLFWWindow, &wx, &wy);
+
+    float x = (float)wx;
+    float y = (float)wy;
+
+#if defined(_WIN32) || defined(__linux__)
+    x /= mPixelRatio;
+    y /= mPixelRatio;
+#endif
+
+    return Vector2i((int)x, (int)y);
+}
+
+void Screen::setWindowPosition(const Vector2i & value) {
+    float x = (float)value.x();
+    float y = (float)value.y();
+
+#if defined(_WIN32) || defined(__linux__)
+    x *= mPixelRatio;
+    y *= mPixelRatio;
+#endif
+
+    glfwSetWindowPos(mGLFWWindow, (int)x, (int)y);
+}
+
 void Screen::drawAll() {
     glClearColor(mBackground[0], mBackground[1], mBackground[2], mBackground[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
