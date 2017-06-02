@@ -63,8 +63,7 @@ public:
     /// Specify a regular expression specifying valid formats
     void setFormat(const std::string &format) { mFormat = format; }
 
-    /// Set the \ref Theme used to draw this widget
-    virtual void setTheme(Theme *theme) override;
+    int textBoxFontSize() const;
 
     /// Set the change callback
     std::function<bool(const std::string& str)> callback() const { return mCallback; }

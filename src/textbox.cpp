@@ -44,8 +44,8 @@ TextBox::TextBox(Widget *parent,const std::string &value)
       mMouseDragPos(Vector2i(-1,-1)),
       mMouseDownModifier(0),
       mTextOffset(0),
-      mLastClick(0) {
-    if (mTheme) mFontSize = mTheme->mTextBoxFontSize;
+      mLastClick(0) 
+{
 }
 
 void TextBox::setEditable(bool editable) {
@@ -53,14 +53,18 @@ void TextBox::setEditable(bool editable) {
     setCursor(editable ? Cursor::IBeam : Cursor::Arrow);
 }
 
-void TextBox::setTheme(Theme *theme) {
-    Widget::setTheme(theme);
-    if (mTheme)
-        mFontSize = mTheme->mTextBoxFontSize;
+int TextBox::textBoxFontSize() const {
+    if (mFontSize < 0) {
+        if (mTheme) {
+            return mTheme->mTextBoxFontSize;
+        }
+        return 20;
+    }
+    return mFontSize;
 }
 
 Vector2i TextBox::preferredSize(NVGcontext *ctx) const {
-    Vector2i size(0, fontSize() * 1.4f);
+    Vector2i size(0, textBoxFontSize() * 1.4f);
 
     float uw = 0;
     if (mUnitsImage > 0) {
@@ -113,7 +117,7 @@ void TextBox::draw(NVGcontext* ctx) {
     nvgStrokeColor(ctx, Color(0, 48));
     nvgStroke(ctx);
 
-    nvgFontSize(ctx, fontSize());
+    nvgFontSize(ctx, textBoxFontSize());
     nvgFontFace(ctx, "sans");
     Vector2i drawPos(mPos.x(), mPos.y() + mSize.y() * 0.5f + 1);
 
@@ -175,7 +179,7 @@ void TextBox::draw(NVGcontext* ctx) {
             nvgText(ctx, iconPos.x(), iconPos.y(), icon.data(), nullptr);
         }
 
-        nvgFontSize(ctx, fontSize());
+        nvgFontSize(ctx, textBoxFontSize());
         nvgFontFace(ctx, "sans");
     }
 
@@ -194,7 +198,7 @@ void TextBox::draw(NVGcontext* ctx) {
             break;
     }
 
-    nvgFontSize(ctx, fontSize());
+    nvgFontSize(ctx, textBoxFontSize());
     nvgFillColor(ctx,
                  mEnabled ? mTheme->mTextColor : mTheme->mDisabledTextColor);
 
