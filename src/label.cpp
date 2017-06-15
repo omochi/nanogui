@@ -20,17 +20,28 @@ Label::Label(Widget *parent, const std::string &caption, const std::string &font
     : Widget(parent), mCaption(caption), mFont(font) {
     if (mTheme) {
         mFontSize = mTheme->mStandardFontSize;
-        mColor = mTheme->mTextColor;
     }
-    if (fontSize >= 0) mFontSize = fontSize;
+    if (fontSize >= 0) {
+        mFontSize = fontSize;
+    }
 }
 
 void Label::setTheme(Theme *theme) {
     Widget::setTheme(theme);
     if (mTheme) {
         mFontSize = mTheme->mStandardFontSize;
-        mColor = mTheme->mTextColor;
     }
+}
+
+Color Label::drawColor() const {
+    if (mTheme) {
+        if (mColor.r() == 0 && mColor.g() == 0 &&
+            mColor.b() == 0 && mColor.w() == 0)
+        {
+            return mTheme->mTextColor;
+        }
+    }
+    return mColor;
 }
 
 Vector2i Label::preferredSize(NVGcontext *ctx) const {
@@ -56,7 +67,7 @@ void Label::draw(NVGcontext *ctx) {
     Widget::draw(ctx);
     nvgFontFace(ctx, mFont.c_str());
     nvgFontSize(ctx, fontSize());
-    nvgFillColor(ctx, mColor);
+    nvgFillColor(ctx, drawColor());
     if (mFixedSize.x() > 0) {
         nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
         nvgTextBox(ctx, mPos.x(), mPos.y(), mFixedSize.x(), mCaption.c_str(), nullptr);

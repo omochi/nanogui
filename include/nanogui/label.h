@@ -47,6 +47,8 @@ public:
     /// Set the \ref Theme used to draw this widget
     virtual void setTheme(Theme *theme) override;
 
+    Color drawColor() const;
+
     /// Compute the size needed to fully display the label
     virtual Vector2i preferredSize(NVGcontext *ctx) const override;
 
