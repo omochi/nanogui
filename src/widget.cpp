@@ -24,7 +24,8 @@ Widget::Widget(Widget *parent)
       mPos(Vector2i::Zero()), mSize(Vector2i::Zero()),
       mFixedSize(Vector2i::Zero()), mVisible(true), mEnabled(true),
       mFocused(false), mMouseFocus(false), mTooltip(""), mFontSize(-1.0f),
-      mCursor(Cursor::Arrow) {
+      mCursor(Cursor::Arrow),
+      mouseDownReceiver_(nullptr) {
     if (parent)
         parent->addChild(this);
 }
@@ -80,14 +81,22 @@ Widget *Widget::findWidget(const Vector2i &p) {
 }
 
 bool Widget::mouseButtonEvent(const Vector2i &p, int button, bool down, int modifiers) {
+    mouseDownReceiver_ = nullptr;
+
     for (auto it = mChildren.rbegin(); it != mChildren.rend(); ++it) {
         Widget *child = *it;
         if (child->visible() && child->contains(p - mPos) &&
             child->mouseButtonEvent(p - mPos, button, down, modifiers))
+        {
+            if (down) {
+                mouseDownReceiver_ = child;
+            }
             return true;
+        }
     }
-    if (button == GLFW_MOUSE_BUTTON_1 && down && !mFocused)
+    if (button == GLFW_MOUSE_BUTTON_1 && down && !mFocused) {
         requestFocus();
+    }
     return false;
 }
 

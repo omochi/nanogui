@@ -203,6 +203,8 @@ public:
     /// Determine the widget located at the given position value (recursive)
     Widget *findWidget(const Vector2i &p);
 
+    Widget * mouseDownReceiver() const { return mouseDownReceiver_; }
+
     /// Handle a mouse button event (default implementation: propagate to children)
     virtual bool mouseButtonEvent(const Vector2i &p, int button, bool down, int modifiers);
 
@@ -258,6 +260,8 @@ protected:
     std::string mTooltip;
     int mFontSize;
     Cursor mCursor;
+
+    Widget * mouseDownReceiver_;
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

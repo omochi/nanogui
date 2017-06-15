@@ -542,37 +542,63 @@ bool Screen::mouseButtonCallbackEvent(int button, int action, int modifiers) {
             }
         }
 
-        if (action == GLFW_PRESS)
+        if (action == GLFW_PRESS) {
             mMouseState |= 1 << button;
-        else
+        } else {
             mMouseState &= ~(1 << button);
+        }
 
         auto dropWidget = findWidget(mMousePos);
         if (mDragActive && action == GLFW_RELEASE &&
-            dropWidget != mDragWidget)
+            dropWidget != mDragWidget) 
+        {
             mDragWidget->mouseButtonEvent(
                 mMousePos - mDragWidget->parent()->absolutePosition(), button,
                 false, mModifiers);
+        }
 
         if (dropWidget != nullptr && dropWidget->cursor() != mCursor) {
             mCursor = dropWidget->cursor();
             glfwSetCursor(mGLFWWindow, mCursors[(int) mCursor]);
         }
 
-        if (action == GLFW_PRESS && (button == GLFW_MOUSE_BUTTON_1 || button == GLFW_MOUSE_BUTTON_2)) {
-            mDragWidget = findWidget(mMousePos);
-            if (mDragWidget == this)
+        bool actionIsDown = action == GLFW_PRESS;
+
+        if (actionIsDown && 
+            (button == GLFW_MOUSE_BUTTON_1 || button == GLFW_MOUSE_BUTTON_2)) 
+        {
+
+            bool consumed = mouseButtonEvent(mMousePos, 
+                button, actionIsDown, mModifiers);
+            if (consumed)
+            {
+                mDragWidget = mouseDownReceiver();
+                while (mDragWidget) {
+                    auto * w = mDragWidget->mouseDownReceiver();
+                    if (!w) { break; }
+                    mDragWidget = w;
+                }
+            }
+
+            if (mDragWidget == this) {
                 mDragWidget = nullptr;
+            }
+
             mDragActive = mDragWidget != nullptr;
-            if (!mDragActive)
+            if (!mDragActive) {
                 updateFocus(nullptr);
+            }
+
+            return consumed;
         } else {
             mDragActive = false;
             mDragWidget = nullptr;
+
+            return mouseButtonEvent(mMousePos, 
+                button, actionIsDown, mModifiers);
         }
 
-        return mouseButtonEvent(mMousePos, button, action == GLFW_PRESS,
-                                mModifiers);
+
     } catch (const std::exception &e) {
         std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
         return false;
