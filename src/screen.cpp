@@ -23,9 +23,6 @@
 #  define NOMINMAX
 #  undef APIENTRY
 
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
-
 #  define GLFW_EXPOSE_NATIVE_WGL
 #  define GLFW_EXPOSE_NATIVE_WIN32
 #  include <GLFW/glfw3native.h>
@@ -412,7 +409,11 @@ void Screen::drawWidgets() {
 #endif
 
     glViewport(0, 0, mFBSize[0], mFBSize[1]);
+
+#ifdef GL_VERSION_3_3
     glBindSampler(0, 0);
+#endif
+
     nvgBeginFrame(mNVGContext, mSize[0], mSize[1], mPixelRatio);
 
     draw(mNVGContext);
