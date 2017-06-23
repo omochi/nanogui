@@ -34,6 +34,38 @@
 
 NAMESPACE_BEGIN(nanogui)
 
+static void clearGLError() {
+    while (glGetError() != GL_NO_ERROR) {}
+}
+
+static int getStencilBitNum() {
+    GLenum err = 0;
+    int num = 0;
+
+    //	this code is valid by reference.
+    //	https://www.khronos.org/opengl/wiki/GLAPI/glGetFramebufferAttachmentParameter
+    //	but in paticular environment,
+    //	we need use GL_STENCIL_ATTACHMENT even for default framebuffer.
+    //	example: Windows 10 / Parallels / iMac
+    clearGLError();
+    glGetFramebufferAttachmentParameteriv(
+        GL_DRAW_FRAMEBUFFER,
+        GL_STENCIL,
+        GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE,
+        &num);
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        glGetFramebufferAttachmentParameteriv(
+            GL_DRAW_FRAMEBUFFER,
+            GL_STENCIL_ATTACHMENT,
+            GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE,
+            &num);
+    }
+
+    clearGLError();
+    return num;
+}
+
 std::map<GLFWwindow *, Screen *> __nanogui_screens;
 
 #if defined(NANOGUI_GLAD)
@@ -139,9 +171,10 @@ Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable,
 #if defined(NANOGUI_GLAD)
     if (!gladInitialized) {
         gladInitialized = true;
-        if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
+        if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
             throw std::runtime_error("Could not initialize GLAD!");
-        glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
+        }
+        clearGLError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
     }
 #endif
 
@@ -264,37 +297,43 @@ void Screen::initialize(GLFWwindow *window, bool shutdownGLFWOnDestruct) {
     mPixelRatio = get_pixel_ratio(window);
 
 #if defined(_WIN32) || defined(__linux__)
-    if (mPixelRatio != 1 && !mFullscreen)
+    if (mPixelRatio != 1 && !mFullscreen) {
         glfwSetWindowSize(window, mSize.x() * mPixelRatio, mSize.y() * mPixelRatio);
+    }
 #endif
 
 #if defined(NANOGUI_GLAD)
     if (!gladInitialized) {
         gladInitialized = true;
-        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
             throw std::runtime_error("Could not initialize GLAD!");
-        glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
+        }
+        clearGLError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
     }
 #endif
 
     /* Detect framebuffer properties and set up compatible NanoVG context */
     GLint nStencilBits = 0, nSamples = 0;
-    glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER,
-        GL_STENCIL, GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, &nStencilBits);
+
+    nStencilBits = getStencilBitNum();
     glGetIntegerv(GL_SAMPLES, &nSamples);
 
     int flags = 0;
-    if (nStencilBits >= 8)
-       flags |= NVG_STENCIL_STROKES;
-    if (nSamples <= 1)
-       flags |= NVG_ANTIALIAS;
+    if (nStencilBits >= 8) {
+        flags |= NVG_STENCIL_STROKES;
+    }
+    if (nSamples <= 1) {
+        flags |= NVG_ANTIALIAS;
+    }
+
 #if !defined(NDEBUG)
     flags |= NVG_DEBUG;
 #endif
 
     mNVGContext = nvgCreateGL3(flags);
-    if (mNVGContext == nullptr)
+    if (mNVGContext == nullptr) {
         throw std::runtime_error("Could not initialize NanoVG!");
+    }
 
     mVisible = glfwGetWindowAttrib(window, GLFW_VISIBLE) != 0;
     setTheme(new Theme(mNVGContext));
@@ -305,8 +344,9 @@ void Screen::initialize(GLFWwindow *window, bool shutdownGLFWOnDestruct) {
     mProcessEvents = true;
     __nanogui_screens[mGLFWWindow] = this;
 
-    for (int i=0; i < (int) Cursor::CursorCount; ++i)
+    for (int i = 0; i < (int)Cursor::CursorCount; ++i) {
         mCursors[i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR + i);
+    }
 
     /// Fixes retina display-related font rendering issue (#185)
     nvgBeginFrame(mNVGContext, mSize[0], mSize[1], mPixelRatio);
