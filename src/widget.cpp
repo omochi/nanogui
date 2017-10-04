@@ -175,6 +175,7 @@ void Widget::removeChild(int index) {
     }
 
     mChildren.erase(mChildren.begin() + index);
+    widget->setParent(nullptr);
     widget->decRef();
 }
 
